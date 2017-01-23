@@ -1,0 +1,14 @@
+#BlueJ class context
+comment0.target=WombatWorld
+comment0.text=\r\n\ A\ wombat\ world\ with\ one\ leaf,\ one\ wombat\ and\ a\ number\ of\ walls\r\n\ such\ that\ there's\ always\ a\ path\ between\ the\ wombat\ and\ the\ leaf,\ and\ \r\n\ at\ least\ 6\ squares\ between\ them.\r\n\ @author\ Foaad\ Khosmood\r\n\ Modified\ from\ original\ by\ Michael\ Kolling\r\n
+comment1.params=
+comment1.target=WombatWorld()
+comment1.text=\r\n\ Create\ a\ new\ world\ with\ 8x8\ cells\ and\r\n\ with\ a\ cell\ size\ of\ 60x60\ pixels\r\n
+comment2.params=
+comment2.target=void\ populate()
+comment2.text=\r\n\ Populate\ the\ world\ with\ a\ fixed\ scenario\ of\ wombats\ and\ leaves.\r\n
+comment3.params=startX\ endX\ startY\ endY
+comment3.target=void\ buildWall(int,\ int,\ int,\ int)
+comment4.params=howMany
+comment4.target=void\ randomRocks(int)
+numComments=5

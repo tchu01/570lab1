@@ -1,0 +1,8 @@
+#BlueJ class context
+comment0.target=Rock
+comment0.text=\r\n\ Rock\ -\ a\ class\ for\ representing\ rocks.\r\n\r\n\ @author\ Michael\ Kolling\r\n\ @version\ 1.0.1\r\n
+comment1.params=
+comment1.target=Rock()
+comment2.params=distance\ cls
+comment2.target=java.util.List\ getObjectsInRange(int,\ java.lang.Class)
+numComments=3
