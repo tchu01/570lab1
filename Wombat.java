@@ -20,6 +20,8 @@ public class Wombat extends Actor
     private static final int WEST = 1;
     private static final int NORTH = 2;
     private static final int SOUTH = 3;
+    private static final int VERTICALHORIZONTAL = 10;
+    private static final int DIAGONAL = 14;
     
     private HashSet<String> open = new HashSet<>();
     private HashSet<String> close = new HashSet<>();
@@ -30,7 +32,7 @@ public class Wombat extends Actor
     
     private int direction;
     private int leavesEaten;
-    private boolean once = true;
+    private boolean doSearch = true;
     private boolean noPath = false;
     
     private GreenfootImage wombatRight;
@@ -54,6 +56,15 @@ public class Wombat extends Actor
         if(leavesEaten == 1) {
             return;
         }
+        
+        if(doSearch) {
+            doSearch = false;
+            // System.out.println("Running A*");
+            astarSearch();
+        }
+        
+        astarFollow();
+        
         /*
         if(foundLeaf()) {
             eatLeaf();
@@ -65,13 +76,6 @@ public class Wombat extends Actor
             turnRandom();
         }
         */
-        if(once) {
-            once = false;
-            System.out.println("Running A*");
-            astarSearch();
-        }
-        
-        astarFollow();
     }
     
     public String createTuple(int x, int y) {
@@ -91,11 +95,11 @@ public class Wombat extends Actor
     public void astarSearch() {
         int x = getX();
         int y = getY();
-        String tup = createTuple(x,y);
+        String start = createTuple(x,y);
         int g = 0;
-        gValue.put(tup, g);
-        parent.put(tup, tup);
-        open.add(tup);
+        open.add(start);
+        gValue.put(start, g);
+        parent.put(start, start);
         
         int targetX = ((WombatWorld) getWorld()).theLeaf.getX();
         int targetY = ((WombatWorld) getWorld()).theLeaf.getY();
@@ -106,20 +110,20 @@ public class Wombat extends Actor
             if(current.equals(goal)) {
                 break;
             }
+            
             // drop current square from open and add to close 
             open.remove(current);
             close.add(current);
             
             // add reachable squares to open
             addSquares(current);
-           
         }
         
         if(open.isEmpty()) {
             noPath = true;
         } else {
             String current = goal;
-            while(!current.equals(tup)) {
+            while(!current.equals(start)) {
                 path.add(current);
                 ndx++;
                 current = parent.get(current);
@@ -134,13 +138,8 @@ public class Wombat extends Actor
             int x = unpackX(tup);
             int y = unpackY(tup);
             
-            int g;
-            if(tup.equals(parent.get(tup))) {
-                g = gValue.get(parent.get(tup));
-            } else {
-                g = gValue.get(parent.get(tup)) + 1;
-            }
-            int h = manhattan(x, y);
+            int g = gValue.get(tup);
+            int h = heuristic(x, y);
             int f = g + h;
             
             if(f < minF) {
@@ -148,18 +147,28 @@ public class Wombat extends Actor
                 ret = tup;
             }
             
-            System.out.println("Considering " + tup + ", g = " + g + " | h = " + h + " | f = " + f);
+            // System.out.println("Considering " + tup + ", g = " + g + " | h = " + h + " | f = " + f);
         }
         
-        System.out.println("Returning: " + ret + "\n");
+        // System.out.println("Returning: " + ret + "\n");
         return ret;
     }
     
-    public int manhattan(int x, int y) {
+    public int heuristic(int x, int y) {
         int targetX = ((WombatWorld) getWorld()).theLeaf.getX();
         int targetY = ((WombatWorld) getWorld()).theLeaf.getY();
         
-        return Math.abs(x - targetX) + Math.abs(y - targetY);
+        int deltaX = Math.abs(x - targetX);
+        int deltaY = Math.abs(y - targetY);
+        
+        if(deltaX < deltaY) {
+            return (deltaX * DIAGONAL) + ((deltaY - deltaX) * VERTICALHORIZONTAL); 
+        } else if (deltaX > deltaY) {
+            return (deltaY * DIAGONAL) + ((deltaX - deltaY) * VERTICALHORIZONTAL);
+        } else {
+            return deltaX * DIAGONAL;
+        }
+
     }
     
     public void addSquares(String current) {
@@ -171,19 +180,30 @@ public class Wombat extends Actor
                     String tup = createTuple(x + i,y + j);
                     
                     if(open.contains(tup)) {
-                        int currentG = gValue.get(current);
-                        int tupG = gValue.get(tup);
-                        if(gValue.get(current) + 1 < gValue.get(tup)) {
-                            gValue.put(tup, gValue.get(current) + 1);
-                            parent.put(tup, current);
-                            System.out.println("Replacing G");
+                        if(Math.abs(i) == 1 && Math.abs(j) == 1) {
+                            if(gValue.get(current) + DIAGONAL < gValue.get(tup)) {
+                                gValue.put(tup, gValue.get(current) + DIAGONAL);
+                                parent.put(tup, current);
+                                // System.out.println("Replacing G through diagonal");
+                            }
+                        } else {
+                            if(gValue.get(current) + VERTICALHORIZONTAL < gValue.get(tup)) {
+                                gValue.put(tup, gValue.get(current) + VERTICALHORIZONTAL);
+                                parent.put(tup, current);
+                                // System.out.println("Replacing G through vertical/horizontal");
+                            }
                         }
                     } else {
                         open.add(tup);
+                        if(Math.abs(i) == 1 && Math.abs(j) == 1) {
+                            gValue.put(tup, gValue.get(current) + DIAGONAL);
+                        } else {
+                            gValue.put(tup, gValue.get(current) + VERTICALHORIZONTAL);
+                        }
                         parent.put(tup, current);
-                        gValue.put(tup, gValue.get(current) + 1);
-                        System.out.println("Adding " + tup + " to open, setting parent to " + current + 
-                            " gValue to " + gValue.get(tup));
+
+                        // System.out.println("Adding " + tup + " to open, setting parent to " + current + 
+                        //    ", gValue to " + gValue.get(tup));
                     }
                 }
             }
@@ -220,23 +240,16 @@ public class Wombat extends Actor
                 int x = unpackX(tup);
                 int y = unpackY(tup);
                 setLocation(x, y);
-                
+                // System.out.println("Step " + ndx);
             }
             
             if(ndx == -1) {
                 eatLeaf();
             }
         } else {
-            System.out.println("No path :(");
+            // System.out.println("No path :(");
         }
-        
     }
-    
-    
-    
-    
-    
-    
     
     /**
      * Check whether there is a leaf in the same cell as we are.
